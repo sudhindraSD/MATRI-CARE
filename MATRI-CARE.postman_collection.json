@@ -1,0 +1,326 @@
+{
+  "info": {
+    "name": "MATRI-CARE API",
+    "description": "Complete API collection for MATRI-CARE maternal health monitoring backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"phone\": \"+1234567890\",\n  \"password\": \"password123\",\n  \"role\": \"pregnant_woman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Profile",
+      "item": [
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/profile",
+              "host": ["{{base_url}}"],
+              "path": ["users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Create/Update Profile - Basic Info",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"age\": 28,\n  \"gestationalAgeWeeks\": 24,\n  \"gravidity\": 2,\n  \"parity\": 1,\n  \"height\": 165,\n  \"weight\": 68,\n  \"emergencyContact\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"+1234567891\",\n    \"relationship\": \"Husband\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/profile",
+              "host": ["{{base_url}}"],
+              "path": ["users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile - Medical History",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hasHypertension\": false,\n  \"hasDiabetes\": false,\n  \"previousComplications\": [\"preterm birth\"],\n  \"chronicIllnesses\": [],\n  \"allergies\": [\"penicillin\"],\n  \"currentMedications\": [\n    {\n      \"name\": \"Prenatal Vitamins\",\n      \"dosage\": \"1 tablet\",\n      \"frequency\": \"daily\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/profile",
+              "host": ["{{base_url}}"],
+              "path": ["users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile - Pregnancy Specifics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodPressure\": {\n    \"systolic\": 120,\n    \"diastolic\": 80,\n    \"lastChecked\": \"2025-10-04T10:00:00Z\"\n  },\n  \"bloodSugar\": {\n    \"value\": 95,\n    \"unit\": \"mg/dL\",\n    \"lastChecked\": \"2025-10-04T10:00:00Z\"\n  },\n  \"hemoglobin\": {\n    \"value\": 12.5,\n    \"unit\": \"g/dL\",\n    \"lastChecked\": \"2025-10-04T10:00:00Z\"\n  },\n  \"fetalMovements\": {\n    \"count\": 15,\n    \"date\": \"2025-10-04T10:00:00Z\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/profile",
+              "host": ["{{base_url}}"],
+              "path": ["users", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Calendar Events",
+      "item": [
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/calendar/events",
+              "host": ["{{base_url}}"],
+              "path": ["calendar", "events"]
+            }
+          }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Prenatal Checkup\",\n  \"description\": \"Regular monthly checkup\",\n  \"eventType\": \"checkup\",\n  \"startDate\": \"2025-10-15T10:00:00Z\",\n  \"endDate\": \"2025-10-15T11:00:00Z\",\n  \"location\": \"City Hospital\",\n  \"reminder\": {\n    \"enabled\": true,\n    \"minutesBefore\": 60\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/calendar/events",
+              "host": ["{{base_url}}"],
+              "path": ["calendar", "events"]
+            }
+          }
+        },
+        {
+          "name": "Get Upcoming Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/calendar/events/upcoming?limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["calendar", "events", "upcoming"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chatbot",
+      "item": [
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What should I eat during pregnancy?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/chatbot/message",
+              "host": ["{{base_url}}"],
+              "path": ["chatbot", "message"]
+            }
+          }
+        },
+        {
+          "name": "Get Chat History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chatbot/history?limit=20&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["chatbot", "history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

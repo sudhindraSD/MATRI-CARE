@@ -1,125 +1,185 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import ChatMessage from '../models/ChatMessage.js';
 import UserProfile from '../models/UserProfile.js';
 import ErrorResponse from '../utils/errorResponse.js';
 
-// Simple keyword-based response system (can be replaced with AI/ML model)
+// Initialize Google Gemini AI with validation
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.error('🚨 GEMINI_API_KEY is not set in environment variables!');
+} else {
+  console.log('✅ Gemini API Key loaded:', apiKey.substring(0, 20) + '...');
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+// Test API connection on startup
+if (apiKey) {
+  (async () => {
+    try {
+      console.log('📞 Testing Gemini API connection...');
+      const result = await model.generateContent('Hello, this is a test message.');
+      const response = await result.response;
+      console.log('✅ Gemini API connection successful!');
+      console.log('💬 Test response:', response.text().substring(0, 50) + '...');
+    } catch (error) {
+      console.error('❌ Gemini API connection failed:', error.message);
+    }
+  })();
+}
+
+// AI-powered response generation with user context
 const generateResponse = async (message, userId) => {
-  const lowerMessage = message.toLowerCase();
-  
-  // Get user profile for personalized responses
-  const profile = await UserProfile.findOne({ user: userId });
-  
-  let response = '';
-  let intent = 'general';
-  let confidence = 0.5;
-  let sentiment = 'neutral';
-  let tags = [];
-  let isUrgent = false;
-
-  // Emergency keywords
-  if (
-    lowerMessage.includes('bleeding') ||
-    lowerMessage.includes('severe pain') ||
-    lowerMessage.includes('emergency') ||
-    lowerMessage.includes('cant breathe') ||
-    lowerMessage.includes('chest pain')
-  ) {
-    response = '⚠️ This sounds like an emergency. Please call emergency services immediately or go to the nearest hospital. If you\'re experiencing severe bleeding, severe abdominal pain, difficulty breathing, or chest pain, seek immediate medical attention.';
-    intent = 'emergency';
-    confidence = 0.95;
-    sentiment = 'urgent';
-    tags = ['emergency', 'urgent'];
-    isUrgent = true;
-  }
-  // Blood pressure queries
-  else if (lowerMessage.includes('blood pressure') || lowerMessage.includes('bp')) {
-    if (profile && profile.bloodPressure) {
-      response = `Your last recorded blood pressure was ${profile.bloodPressure.systolic}/${profile.bloodPressure.diastolic} mmHg on ${new Date(profile.bloodPressure.lastChecked).toLocaleDateString()}. Normal blood pressure during pregnancy is below 140/90 mmHg. If you're experiencing headaches, vision changes, or swelling, please contact your healthcare provider.`;
-    } else {
-      response = 'Blood pressure monitoring is important during pregnancy. Normal BP is below 140/90 mmHg. Please track your readings regularly and consult your healthcare provider if you notice any concerning changes.';
+  try {
+    // Get user profile for personalized responses
+    const profile = await UserProfile.findOne({ user: userId });
+    
+    // Build personalized context
+    let userContext = 'User Profile: ';
+    if (profile) {
+      if (profile.gestationalAgeWeeks) {
+        userContext += `Currently ${profile.gestationalAgeWeeks} weeks pregnant. `;
+      }
+      if (profile.age) {
+        userContext += `Age: ${profile.age} years. `;
+      }
+      if (profile.bloodPressure?.systolic) {
+        userContext += `Last BP: ${profile.bloodPressure.systolic}/${profile.bloodPressure.diastolic} mmHg. `;
+      }
+      if (profile.weight && profile.height) {
+        const bmi = (profile.weight / Math.pow(profile.height / 100, 2)).toFixed(1);
+        userContext += `BMI: ${bmi}. `;
+      }
+      if (profile.hasHypertension) userContext += 'Has hypertension. ';
+      if (profile.hasDiabetes) userContext += 'Has diabetes. ';
+      if (profile.stressLevel) userContext += `Stress level: ${profile.stressLevel}/10. `;
     }
-    intent = 'health_query';
-    confidence = 0.85;
-    tags = ['blood_pressure', 'vital_signs'];
-  }
-  // Fetal movement queries
-  else if (lowerMessage.includes('baby') && (lowerMessage.includes('movement') || lowerMessage.includes('kick'))) {
-    response = 'Fetal movements are a good sign of your baby\'s well-being. You should feel at least 10 movements in 2 hours. If you notice decreased movement or no movement for several hours, contact your healthcare provider immediately.';
-    intent = 'fetal_movement';
-    confidence = 0.9;
-    tags = ['fetal_movement', 'baby_health'];
-  }
-  // Nutrition queries
-  else if (lowerMessage.includes('eat') || lowerMessage.includes('food') || lowerMessage.includes('diet') || lowerMessage.includes('nutrition')) {
-    response = 'During pregnancy, focus on a balanced diet rich in:\n• Fruits and vegetables\n• Whole grains\n• Lean proteins\n• Dairy products\n• Prenatal vitamins with folic acid\n\nAvoid raw fish, unpasteurized dairy, deli meats, and limit caffeine. Stay hydrated by drinking plenty of water.';
-    intent = 'nutrition';
-    confidence = 0.8;
-    tags = ['nutrition', 'diet', 'lifestyle'];
-  }
-  // Exercise queries
-  else if (lowerMessage.includes('exercise') || lowerMessage.includes('workout') || lowerMessage.includes('physical activity')) {
-    response = 'Regular exercise during pregnancy is beneficial! Aim for 30 minutes of moderate activity most days. Safe activities include walking, swimming, prenatal yoga, and stationary cycling. Avoid contact sports and activities with fall risk. Always consult your healthcare provider before starting any exercise program.';
-    intent = 'exercise';
-    confidence = 0.85;
-    tags = ['exercise', 'physical_activity', 'lifestyle'];
-  }
-  // Medication queries
-  else if (lowerMessage.includes('medication') || lowerMessage.includes('medicine') || lowerMessage.includes('drug')) {
-    response = 'Always consult your healthcare provider before taking any medication during pregnancy. Some medications are safe, while others may harm your baby. Never stop prescribed medications without medical advice. Keep a list of all medications you\'re taking.';
-    intent = 'medication';
-    confidence = 0.9;
-    tags = ['medication', 'safety'];
-  }
-  // Symptoms queries
-  else if (lowerMessage.includes('symptom') || lowerMessage.includes('pain') || lowerMessage.includes('discomfort')) {
-    response = 'Common pregnancy symptoms include nausea, fatigue, back pain, and swelling. However, contact your healthcare provider if you experience:\n• Severe abdominal pain\n• Heavy bleeding\n• Severe headaches\n• Vision changes\n• Sudden swelling\n• Fever over 100.4°F\n• Decreased fetal movement';
-    intent = 'symptoms';
-    confidence = 0.75;
-    tags = ['symptoms', 'health_concerns'];
-  }
-  // Appointment queries
-  else if (lowerMessage.includes('appointment') || lowerMessage.includes('checkup') || lowerMessage.includes('visit')) {
-    response = 'Regular prenatal checkups are essential. Typical schedule:\n• Weeks 4-28: Every 4 weeks\n• Weeks 28-36: Every 2 weeks\n• Weeks 36-40: Weekly\n\nYour healthcare provider may adjust this based on your needs. Use the calendar feature to track your appointments.';
-    intent = 'appointment';
-    confidence = 0.85;
-    tags = ['appointment', 'prenatal_care'];
-  }
-  // Gestational age queries
-  else if (lowerMessage.includes('week') || lowerMessage.includes('trimester') || lowerMessage.includes('due date')) {
-    if (profile && profile.gestationalAgeWeeks) {
-      const trimester = profile.gestationalAgeWeeks <= 13 ? 'first' : profile.gestationalAgeWeeks <= 27 ? 'second' : 'third';
-      response = `You are currently at ${profile.gestationalAgeWeeks} weeks of pregnancy (${trimester} trimester). Each week brings new developments for your baby. Make sure to attend all scheduled prenatal appointments.`;
-    } else {
-      response = 'Pregnancy is divided into three trimesters:\n• First trimester: Weeks 1-13\n• Second trimester: Weeks 14-27\n• Third trimester: Weeks 28-40\n\nPlease update your profile with your gestational age for personalized information.';
+    
+    // Check for emergency keywords first
+    const emergencyKeywords = [
+      'bleeding', 'severe pain', 'emergency', 'cant breathe', 'chest pain',
+      'heavy bleeding', 'sudden severe headache', 'vision problems', 'seizure',
+      'high fever', 'severe vomiting', 'water broke', 'contractions'
+    ];
+    
+    const isEmergency = emergencyKeywords.some(keyword => 
+      message.toLowerCase().includes(keyword)
+    );
+    
+    if (isEmergency) {
+      return {
+        response: '🚨 EMERGENCY ALERT: Based on your message, this could be a medical emergency. Please call emergency services (911) immediately or go to the nearest hospital emergency room right away. Do not wait - your safety and your baby\'s safety are the top priority.',
+        intent: 'emergency',
+        confidence: 0.95,
+        sentiment: 'urgent',
+        tags: ['emergency', 'urgent'],
+        isUrgent: true
+      };
     }
-    intent = 'gestational_age';
-    confidence = 0.8;
-    tags = ['gestational_age', 'pregnancy_info'];
-  }
-  // Greeting
-  else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-    response = 'Hello! I\'m here to help you with pregnancy-related questions and information. How can I assist you today?';
-    intent = 'greeting';
-    confidence = 0.95;
-    sentiment = 'positive';
-    tags = ['greeting'];
-  }
-  // Default response
-  else {
-    response = 'Thank you for your message. I\'m here to provide general pregnancy information. For specific medical advice, please consult your healthcare provider. You can ask me about:\n• Nutrition and diet\n• Exercise and physical activity\n• Common symptoms\n• Prenatal care\n• Fetal development\n• Emergency signs';
-    intent = 'general';
-    confidence = 0.5;
-    tags = ['general'];
-  }
+    
+    // Create comprehensive prompt for AI
+    const prompt = `You are MATRI-CARE AI, a pregnancy health assistant. 
 
-  return {
-    response,
-    intent,
-    confidence,
-    sentiment,
-    tags,
-    isUrgent
-  };
+${userContext}
+
+User Question: "${message}"
+
+IMPORTANT: Give CLEAR, DIRECT, and FOCUSED answers. Don't overwhelm with too much information.
+
+Guidelines:
+1. Start with a direct answer to the question
+2. Keep it simple and easy to understand
+3. Use the user's profile information when relevant
+4. Give 2-3 key practical points maximum
+5. Be warm but concise
+6. If serious, clearly state when to contact a doctor
+7. Maximum 150 words - be concise!
+8. Use simple language, avoid medical jargon
+9. Focus ONLY on what they asked about
+10. Don't add unnecessary background information
+
+Respond as MATRI-CARE AI:`;
+
+    console.log('🤖 Sending request to Gemini AI...');
+    console.log('Prompt length:', prompt.length);
+    
+    // Generate AI response with timeout
+    const result = await Promise.race([
+      model.generateContent(prompt),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout after 30 seconds')), 30000)
+      )
+    ]);
+    
+    const response = await result.response;
+    const responseText = response.text();
+    
+    console.log('✅ AI Response received, length:', responseText.length);
+    
+    // Analyze intent and sentiment
+    let intent = 'general';
+    let confidence = 0.8;
+    let sentiment = 'neutral';
+    let tags = [];
+    
+    // Simple intent classification
+    const messageLower = message.toLowerCase();
+    if (messageLower.includes('eat') || messageLower.includes('food') || messageLower.includes('diet')) {
+      intent = 'nutrition';
+      tags = ['nutrition', 'diet'];
+    } else if (messageLower.includes('exercise') || messageLower.includes('workout')) {
+      intent = 'exercise';
+      tags = ['exercise', 'fitness'];
+    } else if (messageLower.includes('symptom') || messageLower.includes('pain')) {
+      intent = 'symptoms';
+      tags = ['symptoms', 'health'];
+    } else if (messageLower.includes('baby') || messageLower.includes('fetal')) {
+      intent = 'fetal_development';
+      tags = ['baby', 'development'];
+    } else if (messageLower.includes('appointment') || messageLower.includes('doctor')) {
+      intent = 'medical_care';
+      tags = ['appointments', 'medical'];
+    }
+    
+    return {
+      response: responseText,
+      intent,
+      confidence,
+      sentiment,
+      tags,
+      isUrgent: false
+    };
+    
+  } catch (error) {
+    console.error('🚨 AI Response Error Details:');
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Full error:', error);
+    
+    // More specific error handling
+    let fallbackMessage = 'I\'m having trouble connecting to my AI services right now. ';
+    
+    if (error.message && error.message.includes('API_KEY')) {
+      fallbackMessage += 'There seems to be an issue with the API configuration. ';
+    } else if (error.message && error.message.includes('quota')) {
+      fallbackMessage += 'The AI service is temporarily at capacity. ';
+    } else if (error.message && error.message.includes('network')) {
+      fallbackMessage += 'There\'s a network connectivity issue. ';
+    }
+    
+    fallbackMessage += 'For your safety, please consult with your healthcare provider about your question. You can also find reliable pregnancy information from reputable sources like the American College of Obstetricians and Gynecologists (ACOG).';
+    
+    // Fallback response if AI fails
+    return {
+      response: fallbackMessage,
+      intent: 'fallback',
+      confidence: 0.3,
+      sentiment: 'neutral',
+      tags: ['fallback', 'error'],
+      isUrgent: false
+    };
+  }
 };
 
 // @desc    Send message to chatbot
@@ -159,8 +219,10 @@ export const sendMessage = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: {
+        _id: chatMessage._id,
         message: chatMessage.message,
         response: chatMessage.response,
+        sender: 'bot',
         intent: chatMessage.intent,
         isUrgent: chatMessage.isUrgent,
         timestamp: chatMessage.createdAt
@@ -181,7 +243,7 @@ export const getChatHistory = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const messages = await ChatMessage.find({ user: req.user.id })
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: 1 })
       .limit(limit)
       .skip(skip);
 

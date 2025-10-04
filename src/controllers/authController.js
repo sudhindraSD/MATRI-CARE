@@ -1,6 +1,6 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
-import ErrorResponse from '../utils/errorResponse.js';
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+import ErrorResponse from "../utils/errorResponse.js";
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
@@ -15,7 +15,7 @@ export const register = async (req, res, next) => {
       email,
       phone,
       password,
-      role
+      role,
     });
 
     sendTokenResponse(user, 200, res);
@@ -33,21 +33,23 @@ export const login = async (req, res, next) => {
 
     // Validate email & password
     if (!email || !password) {
-      return next(new ErrorResponse('Please provide an email and password', 400));
+      return next(
+        new ErrorResponse("Please provide an email and password", 400)
+      );
     }
 
     // Check for user
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-      return next(new ErrorResponse('Invalid credentials', 401));
+      return next(new ErrorResponse("Invalid credentials", 401));
     }
 
     // Check if password matches
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
-      return next(new ErrorResponse('Invalid credentials', 401));
+      return next(new ErrorResponse("Invalid credentials", 401));
     }
 
     sendTokenResponse(user, 200, res);
@@ -64,7 +66,7 @@ export const getMe = async (req, res, next) => {
     const user = await User.findById(req.user.id);
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (err) {
     next(err);
@@ -75,20 +77,19 @@ export const getMe = async (req, res, next) => {
 // @route   GET /api/v1/auth/logout
 // @access  Private
 export const logout = async (req, res, next) => {
-  res.cookie('token', 'none', {
+  res.cookie("token", "none", {
     expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true
+    httpOnly: true,
   });
 
   res.status(200).json({
     success: true,
-    data: {}
+    data: {},
   });
 };
 
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
-  // Create token
   const token = user.getSignedJwtToken();
 
   const options = {
@@ -96,14 +97,21 @@ const sendTokenResponse = (user, statusCode, res) => {
       Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
+    secure: process.env.NODE_ENV === "production",
   };
 
   res
     .status(statusCode)
-    .cookie('token', token, options)
+    .cookie("token", token, options)
     .json({
       success: true,
-      token
+      token,
+      user: {
+        // ADD THIS
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
 };

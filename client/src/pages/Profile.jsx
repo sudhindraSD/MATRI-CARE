@@ -1,0 +1,377 @@
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { User, Save, Heart, Activity, Calendar, FileText } from 'lucide-react';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
+import useAuthStore from '../store/authStore';
+
+const Profile = () => {
+  const { user } = useAuthStore();
+  const [activeTab, setActiveTab] = useState('basic');
+  const [profile, setProfile] = useState({
+    age: '',
+    gestationalAgeWeeks: '',
+    height: '',
+    weight: '',
+    bloodPressure: { systolic: '', diastolic: '' },
+    bloodSugar: { fasting: '', postprandial: '' },
+    hasHypertension: false,
+    hasDiabetes: false,
+    hasThyroidDisorder: false,
+    previousPregnancies: 0,
+    previousCesareans: 0,
+    previousMiscarriages: 0,
+    expectedDeliveryDate: '',
+    currentSymptoms: [],
+    exerciseFrequency: 'moderate',
+    dietQuality: 'balanced',
+    smokingStatus: 'never',
+    alcoholConsumption: 'none',
+    stressLevel: 'moderate',
+    sleepQuality: 'good'
+  });
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await api.get('/users/profile');
+      if (response.data.data) {
+        setProfile({ ...profile, ...response.data.data });
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/users/profile', profile);
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to update profile');
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setProfile({ ...profile, [field]: value });
+  };
+
+  const handleNestedChange = (parent, field, value) => {
+    setProfile({
+      ...profile,
+      [parent]: { ...profile[parent], [field]: value }
+    });
+  };
+
+  const tabs = [
+    { id: 'basic', label: 'Basic Info', icon: User },
+    { id: 'health', label: 'Health Metrics', icon: Activity },
+    { id: 'medical', label: 'Medical History', icon: FileText },
+    { id: 'lifestyle', label: 'Lifestyle', icon: Heart }
+  ];
+
+  return (
+    <div className="min-h-screen p-4 md:p-8">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card rounded-2xl p-6 mb-6"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="gradient-primary p-4 rounded-2xl">
+              <User className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold gradient-text">My Profile</h1>
+              <p className="text-gray-600">{user?.email}</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Tabs */}
+        <div className="glass-card rounded-2xl p-2 mb-6">
+          <div className="flex space-x-2 overflow-x-auto">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition-all whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white'
+                      : 'text-gray-700 hover:bg-white/50'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Form */}
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="glass-card rounded-2xl p-6"
+        >
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Basic Info */}
+            {activeTab === 'basic' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
+                    <input
+                      type="number"
+                      value={profile.age}
+                      onChange={(e) => handleChange('age', e.target.value)}
+                      className="input-field"
+                      placeholder="28"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Gestational Age (weeks)</label>
+                    <input
+                      type="number"
+                      value={profile.gestationalAgeWeeks}
+                      onChange={(e) => handleChange('gestationalAgeWeeks', e.target.value)}
+                      className="input-field"
+                      placeholder="24"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Height (cm)</label>
+                    <input
+                      type="number"
+                      value={profile.height}
+                      onChange={(e) => handleChange('height', e.target.value)}
+                      className="input-field"
+                      placeholder="165"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
+                    <input
+                      type="number"
+                      value={profile.weight}
+                      onChange={(e) => handleChange('weight', e.target.value)}
+                      className="input-field"
+                      placeholder="68"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Expected Delivery Date</label>
+                    <input
+                      type="date"
+                      value={profile.expectedDeliveryDate?.split('T')[0] || ''}
+                      onChange={(e) => handleChange('expectedDeliveryDate', e.target.value)}
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Health Metrics */}
+            {activeTab === 'health' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure (Systolic)</label>
+                    <input
+                      type="number"
+                      value={profile.bloodPressure?.systolic || ''}
+                      onChange={(e) => handleNestedChange('bloodPressure', 'systolic', e.target.value)}
+                      className="input-field"
+                      placeholder="120"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure (Diastolic)</label>
+                    <input
+                      type="number"
+                      value={profile.bloodPressure?.diastolic || ''}
+                      onChange={(e) => handleNestedChange('bloodPressure', 'diastolic', e.target.value)}
+                      className="input-field"
+                      placeholder="80"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Blood Sugar (Fasting)</label>
+                    <input
+                      type="number"
+                      value={profile.bloodSugar?.fasting || ''}
+                      onChange={(e) => handleNestedChange('bloodSugar', 'fasting', e.target.value)}
+                      className="input-field"
+                      placeholder="90"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Blood Sugar (Postprandial)</label>
+                    <input
+                      type="number"
+                      value={profile.bloodSugar?.postprandial || ''}
+                      onChange={(e) => handleNestedChange('bloodSugar', 'postprandial', e.target.value)}
+                      className="input-field"
+                      placeholder="120"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Medical History */}
+            {activeTab === 'medical' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Previous Pregnancies</label>
+                    <input
+                      type="number"
+                      value={profile.previousPregnancies}
+                      onChange={(e) => handleChange('previousPregnancies', e.target.value)}
+                      className="input-field"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Previous Cesareans</label>
+                    <input
+                      type="number"
+                      value={profile.previousCesareans}
+                      onChange={(e) => handleChange('previousCesareans', e.target.value)}
+                      className="input-field"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Previous Miscarriages</label>
+                    <input
+                      type="number"
+                      value={profile.previousMiscarriages}
+                      onChange={(e) => handleChange('previousMiscarriages', e.target.value)}
+                      className="input-field"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={profile.hasHypertension}
+                      onChange={(e) => handleChange('hasHypertension', e.target.checked)}
+                      className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-gray-700">Hypertension</span>
+                  </label>
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={profile.hasDiabetes}
+                      onChange={(e) => handleChange('hasDiabetes', e.target.checked)}
+                      className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-gray-700">Diabetes</span>
+                  </label>
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={profile.hasThyroidDisorder}
+                      onChange={(e) => handleChange('hasThyroidDisorder', e.target.checked)}
+                      className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-gray-700">Thyroid Disorder</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Lifestyle */}
+            {activeTab === 'lifestyle' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Exercise Frequency</label>
+                    <select
+                      value={profile.exerciseFrequency}
+                      onChange={(e) => handleChange('exerciseFrequency', e.target.value)}
+                      className="input-field"
+                    >
+                      <option value="none">None</option>
+                      <option value="light">Light</option>
+                      <option value="moderate">Moderate</option>
+                      <option value="active">Active</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Diet Quality</label>
+                    <select
+                      value={profile.dietQuality}
+                      onChange={(e) => handleChange('dietQuality', e.target.value)}
+                      className="input-field"
+                    >
+                      <option value="poor">Poor</option>
+                      <option value="fair">Fair</option>
+                      <option value="balanced">Balanced</option>
+                      <option value="excellent">Excellent</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Stress Level</label>
+                    <select
+                      value={profile.stressLevel}
+                      onChange={(e) => handleChange('stressLevel', e.target.value)}
+                      className="input-field"
+                    >
+                      <option value="low">Low</option>
+                      <option value="moderate">Moderate</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Sleep Quality</label>
+                    <select
+                      value={profile.sleepQuality}
+                      onChange={(e) => handleChange('sleepQuality', e.target.value)}
+                      className="input-field"
+                    >
+                      <option value="poor">Poor</option>
+                      <option value="fair">Fair</option>
+                      <option value="good">Good</option>
+                      <option value="excellent">Excellent</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              className="btn-primary w-full flex items-center justify-center space-x-2"
+            >
+              <Save className="w-5 h-5" />
+              <span>Save Profile</span>
+            </motion.button>
+          </form>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;

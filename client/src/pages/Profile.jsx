@@ -12,40 +12,33 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('basic');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [profile, setProfile] = useState({
-    age: '',
-    gestationalAgeWeeks: '',
-    height: '',
-    weight: '',
+    // Basic Info
+    age: null,
+    gestationalAgeWeeks: null,
+    height: null,
+    weight: null,
+    gravidity: null,
+    parity: null,
+    
+    // Health Metrics - Simple structure
     bloodPressure: { 
-      systolic: '', 
-      diastolic: '',
-      lastChecked: null
+      systolic: null, 
+      diastolic: null
     },
     bloodSugar: { 
-      value: '', 
-      unit: 'mg/dL',
-      lastChecked: null
+      value: null, 
+      unit: 'mg/dL'
     },
     hemoglobin: {
-      value: '',
-      unit: 'g/dL',
-      lastChecked: null
+      value: null,
+      unit: 'g/dL'
     },
+    
+    // Medical History
     hasHypertension: false,
     hasDiabetes: false,
-    gravidity: 0,
-    parity: 0,
-    expectedDeliveryDate: '',
-    physicalActivity: {
-      level: 'moderate',
-      minutesPerWeek: '',
-      type: []
-    },
-    nutritionalHabits: {
-      dietType: 'balanced',
-      supplements: [],
-      mealsPerDay: 3
-    },
+    
+    // Lifestyle - Simple fields only
     stressLevel: 5,
     hasSupportSystem: null,
     smokes: false,
@@ -70,64 +63,59 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Clean up the profile data before sending
-      const cleanProfile = { ...profile };
+      // Simple data structure that works with the model
+      const profileData = {
+        // Basic Info - convert empty strings to null
+        age: profile.age || null,
+        gestationalAgeWeeks: profile.gestationalAgeWeeks || null,
+        height: profile.height || null,
+        weight: profile.weight || null,
+        gravidity: profile.gravidity || null,
+        parity: profile.parity || null,
+        
+        // Health Metrics - only include if values exist
+        ...(profile.bloodPressure?.systolic || profile.bloodPressure?.diastolic ? {
+          bloodPressure: {
+            systolic: profile.bloodPressure.systolic || null,
+            diastolic: profile.bloodPressure.diastolic || null,
+            lastChecked: new Date()
+          }
+        } : {}),
+        
+        ...(profile.bloodSugar?.value ? {
+          bloodSugar: {
+            value: profile.bloodSugar.value,
+            unit: 'mg/dL',
+            lastChecked: new Date()
+          }
+        } : {}),
+        
+        ...(profile.hemoglobin?.value ? {
+          hemoglobin: {
+            value: profile.hemoglobin.value,
+            unit: 'g/dL',
+            lastChecked: new Date()
+          }
+        } : {}),
+        
+        // Medical History
+        hasHypertension: profile.hasHypertension || false,
+        hasDiabetes: profile.hasDiabetes || false,
+        
+        // Lifestyle
+        stressLevel: profile.stressLevel || null,
+        hasSupportSystem: profile.hasSupportSystem,
+        smokes: profile.smokes || false,
+        consumesAlcohol: profile.consumesAlcohol || false
+      };
       
-      // Convert empty strings to null for numeric fields
-      if (cleanProfile.age === '') cleanProfile.age = null;
-      if (cleanProfile.gestationalAgeWeeks === '') cleanProfile.gestationalAgeWeeks = null;
-      if (cleanProfile.height === '') cleanProfile.height = null;
-      if (cleanProfile.weight === '') cleanProfile.weight = null;
-      if (cleanProfile.gravidity === '') cleanProfile.gravidity = null;
-      if (cleanProfile.parity === '') cleanProfile.parity = null;
-      
-      // Clean nested objects
-      if (cleanProfile.bloodPressure) {
-        if (cleanProfile.bloodPressure.systolic === '') cleanProfile.bloodPressure.systolic = null;
-        if (cleanProfile.bloodPressure.diastolic === '') cleanProfile.bloodPressure.diastolic = null;
-        if (!cleanProfile.bloodPressure.systolic && !cleanProfile.bloodPressure.diastolic) {
-          cleanProfile.bloodPressure.lastChecked = null;
-        } else {
-          cleanProfile.bloodPressure.lastChecked = new Date();
-        }
-      }
-      
-      if (cleanProfile.bloodSugar) {
-        if (cleanProfile.bloodSugar.value === '') cleanProfile.bloodSugar.value = null;
-        if (!cleanProfile.bloodSugar.value) {
-          cleanProfile.bloodSugar.lastChecked = null;
-        } else {
-          cleanProfile.bloodSugar.lastChecked = new Date();
-        }
-      }
-      
-      if (cleanProfile.hemoglobin) {
-        if (cleanProfile.hemoglobin.value === '') cleanProfile.hemoglobin.value = null;
-        if (!cleanProfile.hemoglobin.value) {
-          cleanProfile.hemoglobin.lastChecked = null;
-        } else {
-          cleanProfile.hemoglobin.lastChecked = new Date();
-        }
-      }
-      
-      if (cleanProfile.physicalActivity) {
-        if (cleanProfile.physicalActivity.minutesPerWeek === '') {
-          cleanProfile.physicalActivity.minutesPerWeek = null;
-        }
-      }
-      
-      if (cleanProfile.nutritionalHabits) {
-        if (cleanProfile.nutritionalHabits.mealsPerDay === '') {
-          cleanProfile.nutritionalHabits.mealsPerDay = null;
-        }
-      }
-      
-      console.log('🚀 Sending profile data:', cleanProfile);
-      await api.post('/users/profile', cleanProfile);
-      toast.success('Profile updated successfully!');
+      console.log('🚀 Sending clean profile data:', profileData);
+      await api.post('/users/profile', profileData);
+      toast.success('Profile saved successfully! 🎉');
     } catch (error) {
       console.error('❌ Profile update error:', error.response?.data);
-      toast.error(error.response?.data?.error || 'Failed to update profile');
+      const errorMessage = error.response?.data?.error || 'Failed to save profile';
+      toast.error(errorMessage);
     }
   };
 
@@ -224,52 +212,51 @@ const Profile = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Age <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="number"
-                      value={profile.age}
+                      min="10"
+                      max="60"
+                      value={profile.age || ''}
                       onChange={(e) => handleChange('age', e.target.value)}
                       className="input-field"
                       placeholder="28"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Gestational Age (weeks)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Gestational Age (weeks) <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="number"
-                      value={profile.gestationalAgeWeeks}
+                      min="1"
+                      max="42"
+                      value={profile.gestationalAgeWeeks || ''}
                       onChange={(e) => handleChange('gestationalAgeWeeks', e.target.value)}
                       className="input-field"
                       placeholder="24"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Height (cm)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Height (cm) <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="number"
-                      value={profile.height}
+                      min="100"
+                      max="250"
+                      value={profile.height || ''}
                       onChange={(e) => handleChange('height', e.target.value)}
                       className="input-field"
                       placeholder="165"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg) <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="number"
-                      value={profile.weight}
+                      min="30"
+                      max="200"
+                      value={profile.weight || ''}
                       onChange={(e) => handleChange('weight', e.target.value)}
                       className="input-field"
                       placeholder="68"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Expected Delivery Date</label>
-                    <input
-                      type="date"
-                      value={profile.expectedDeliveryDate?.split('T')[0] || ''}
-                      onChange={(e) => handleChange('expectedDeliveryDate', e.target.value)}
-                      className="input-field"
                     />
                   </div>
                 </div>
@@ -281,9 +268,11 @@ const Profile = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure (Systolic)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure Systolic <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="number"
+                      min="70"
+                      max="250"
                       value={profile.bloodPressure?.systolic || ''}
                       onChange={(e) => handleNestedChange('bloodPressure', 'systolic', e.target.value)}
                       className="input-field"
@@ -291,9 +280,11 @@ const Profile = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure (Diastolic)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure Diastolic <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="number"
+                      min="40"
+                      max="150"
                       value={profile.bloodPressure?.diastolic || ''}
                       onChange={(e) => handleNestedChange('bloodPressure', 'diastolic', e.target.value)}
                       className="input-field"
@@ -301,9 +292,10 @@ const Profile = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Blood Sugar Level</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Blood Sugar Level <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="number"
+                      min="0"
                       value={profile.bloodSugar?.value || ''}
                       onChange={(e) => handleNestedChange('bloodSugar', 'value', e.target.value)}
                       className="input-field"
@@ -311,9 +303,10 @@ const Profile = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Hemoglobin Level</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Hemoglobin Level <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="number"
+                      min="0"
                       step="0.1"
                       value={profile.hemoglobin?.value || ''}
                       onChange={(e) => handleNestedChange('hemoglobin', 'value', e.target.value)}
@@ -330,23 +323,23 @@ const Profile = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Gravidity (Total Pregnancies)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Gravidity (Total Pregnancies) <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="number"
                       min="0"
                       value={profile.gravidity || ''}
-                      onChange={(e) => handleChange('gravidity', parseInt(e.target.value) || 0)}
+                      onChange={(e) => handleChange('gravidity', e.target.value ? parseInt(e.target.value) : null)}
                       className="input-field"
                       placeholder="0"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Parity (Live Births)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Parity (Live Births) <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="number"
                       min="0"
                       value={profile.parity || ''}
-                      onChange={(e) => handleChange('parity', parseInt(e.target.value) || 0)}
+                      onChange={(e) => handleChange('parity', e.target.value ? parseInt(e.target.value) : null)}
                       className="input-field"
                       placeholder="0"
                     />
@@ -354,10 +347,11 @@ const Profile = () => {
                 </div>
 
                 <div className="space-y-3">
+                  <h4 className="font-medium text-gray-800">Medical Conditions <span className="text-gray-500">(optional)</span></h4>
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={profile.hasHypertension}
+                      checked={profile.hasHypertension || false}
                       onChange={(e) => handleChange('hasHypertension', e.target.checked)}
                       className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500"
                     />
@@ -366,20 +360,11 @@ const Profile = () => {
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={profile.hasDiabetes}
+                      checked={profile.hasDiabetes || false}
                       onChange={(e) => handleChange('hasDiabetes', e.target.checked)}
                       className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500"
                     />
                     <span className="text-gray-700">Diabetes</span>
-                  </label>
-                  <label className="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={profile.hasThyroidDisorder}
-                      onChange={(e) => handleChange('hasThyroidDisorder', e.target.checked)}
-                      className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500"
-                    />
-                    <span className="text-gray-700">Thyroid Disorder</span>
                   </label>
                 </div>
               </div>
@@ -390,62 +375,7 @@ const Profile = () => {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Physical Activity Level</label>
-                    <select
-                      value={profile.physicalActivity?.level || 'moderate'}
-                      onChange={(e) => handleNestedChange('physicalActivity', 'level', e.target.value)}
-                      className="input-field"
-                    >
-                      <option value="sedentary">Sedentary</option>
-                      <option value="light">Light</option>
-                      <option value="moderate">Moderate</option>
-                      <option value="active">Active</option>
-                      <option value="very_active">Very Active</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Exercise Minutes per Week</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={profile.physicalActivity?.minutesPerWeek || ''}
-                      onChange={(e) => handleNestedChange('physicalActivity', 'minutesPerWeek', parseInt(e.target.value) || 0)}
-                      className="input-field"
-                      placeholder="150"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Diet Type</label>
-                    <select
-                      value={profile.nutritionalHabits?.dietType || 'balanced'}
-                      onChange={(e) => handleNestedChange('nutritionalHabits', 'dietType', e.target.value)}
-                      className="input-field"
-                    >
-                      <option value="balanced">Balanced</option>
-                      <option value="vegetarian">Vegetarian</option>
-                      <option value="vegan">Vegan</option>
-                      <option value="low_carb">Low Carb</option>
-                      <option value="mediterranean">Mediterranean</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Meals per Day</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={profile.nutritionalHabits?.mealsPerDay || ''}
-                      onChange={(e) => handleNestedChange('nutritionalHabits', 'mealsPerDay', parseInt(e.target.value) || 3)}
-                      className="input-field"
-                      placeholder="3"
-                    />
-                  </div>
-                </div>
-                
-                {/* Stress Level and Support */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Stress Level (1-10)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Stress Level (1-10) <span className="text-gray-500">(optional)</span></label>
                     <input
                       type="range"
                       min="1"
@@ -461,7 +391,7 @@ const Profile = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Support System</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Do you have a support system? <span className="text-gray-500">(optional)</span></label>
                     <div className="flex space-x-4">
                       <label className="flex items-center">
                         <input
@@ -489,8 +419,9 @@ const Profile = () => {
                   </div>
                 </div>
                 
-                {/* Lifestyle Habits */}
-                <div className="space-y-3">
+                {/* Simple Lifestyle Questions */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-800">Lifestyle Questions <span className="text-gray-500">(optional)</span></h4>
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
@@ -498,7 +429,7 @@ const Profile = () => {
                       onChange={(e) => handleChange('smokes', e.target.checked)}
                       className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500"
                     />
-                    <span className="text-gray-700">Smokes</span>
+                    <span className="text-gray-700">Do you smoke?</span>
                   </label>
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
@@ -507,7 +438,7 @@ const Profile = () => {
                       onChange={(e) => handleChange('consumesAlcohol', e.target.checked)}
                       className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500"
                     />
-                    <span className="text-gray-700">Consumes Alcohol</span>
+                    <span className="text-gray-700">Do you consume alcohol?</span>
                   </label>
                 </div>
               </div>

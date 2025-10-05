@@ -62,40 +62,44 @@ export const getUserProfile = async (req, res, next) => {
       .populate('user', 'name email phone role');
 
     if (!profile) {
-      // Create a basic profile with some sample data for new users
+      // Create a clean profile with zero/empty values for new users
       profile = await UserProfile.create({
         user: req.user.id,
-        age: 28,
-        gestationalAgeWeeks: 24,
-        height: 165,
-        weight: 68,
+        age: null, // User will enter their real age
+        gestationalAgeWeeks: null, // User will enter current pregnancy week
+        height: null, // User will enter their height
+        weight: null, // User will enter their current weight
         bloodPressure: {
-          systolic: 115,
-          diastolic: 75,
-          lastChecked: new Date()
+          systolic: null,
+          diastolic: null,
+          lastChecked: null
         },
         bloodSugar: {
-          value: 95,
+          value: null,
           unit: 'mg/dL',
-          lastChecked: new Date()
+          lastChecked: null
         },
         hemoglobin: {
-          value: 12.5,
+          value: null,
           unit: 'g/dL',
-          lastChecked: new Date()
+          lastChecked: null
         },
         hasHypertension: false,
         hasDiabetes: false,
-        stressLevel: 4,
-        hasSupportSystem: true
+        stressLevel: null, // User will set their stress level
+        hasSupportSystem: null, // User will indicate if they have support
+        weightHistory: [] // Empty weight history
       });
       
       // Populate the user data for the newly created profile
       profile = await UserProfile.findById(profile._id)
         .populate('user', 'name email phone role');
         
-      // Create some sample calendar events for new users
-      await createSampleCalendarEvents(req.user.id);
+      // Don't create sample calendar events for new users - let them start fresh
+      // await createSampleCalendarEvents(req.user.id);
+      
+      // Weight history is already initialized as empty array
+      // No need to add initial weight entry since weight is null
     }
 
     res.status(200).json({
@@ -125,6 +129,28 @@ export const updateUserProfile = async (req, res, next) => {
       });
     }
 
+    // Check if weight is being updated and add to history
+    if (req.body.weight && req.body.weight !== profile.weight) {
+      const weightEntry = {
+        weight: req.body.weight,
+        date: new Date(),
+        gestationalWeeks: req.body.gestationalAgeWeeks || profile.gestationalAgeWeeks
+      };
+      
+      // Add to weight history (keep last 10 entries)
+      if (!profile.weightHistory) {
+        profile.weightHistory = [];
+      }
+      profile.weightHistory.push(weightEntry);
+      
+      // Keep only last 10 entries
+      if (profile.weightHistory.length > 10) {
+        profile.weightHistory = profile.weightHistory.slice(-10);
+      }
+      
+      req.body.weightHistory = profile.weightHistory;
+    }
+    
     // Update existing profile
     profile = await UserProfile.findOneAndUpdate(
       { user: req.user.id },

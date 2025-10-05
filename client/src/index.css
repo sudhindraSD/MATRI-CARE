@@ -54,3 +54,49 @@ body {
   border-color: #a855f7;
   box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
 }
+
+/* 💬 CHATBOT MESSAGE FORMATTING */
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content p {
+  margin-bottom: 0.75rem;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content strong {
+  font-weight: 700;
+  color: #374151;
+}
+
+.markdown-content ul {
+  margin: 0.5rem 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.markdown-content li {
+  margin: 0.25rem 0;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.markdown-content li:before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #9333ea;
+  font-weight: bold;
+}
+
+.database-response strong {
+  color: #1f2937;
+}
+
+.ai-response strong {
+  color: #374151;
+}

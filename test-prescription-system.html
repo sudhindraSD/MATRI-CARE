@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATRI-CARE: Prescription AI System Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .persona-iron-warrior { background: linear-gradient(135deg, #DC2626, #F87171); }
+        .persona-sweet-balance { background: linear-gradient(135deg, #2563EB, #60A5FA); }
+        .persona-pressure-guardian { background: linear-gradient(135deg, #059669, #34D399); }
+        .persona-wellness-champion { background: linear-gradient(135deg, #7C3AED, #A78BFA); }
+        .persona-hormone-harmony { background: linear-gradient(135deg, #DB2777, #F472B6); }
+        .persona-comfort-care { background: linear-gradient(135deg, #EA580C, #FB923C); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold gradient-text mb-2">
+                🤖 MATRI-MIND: Prescription Intelligence System
+            </h1>
+            <p class="text-gray-600 text-lg">
+                Experience AI-powered prescription analysis and personalized health personas
+            </p>
+        </div>
+
+        <!-- Demo Section -->
+        <div class="max-w-4xl mx-auto">
+            <!-- Input Section -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">
+                    📋 Add Your Prescription for AI Analysis
+                </h2>
+                
+                <!-- Input Methods -->
+                <div class="flex justify-center space-x-4 mb-6">
+                    <button 
+                        id="textMethodBtn"
+                        class="px-6 py-3 rounded-lg font-medium bg-blue-500 text-white"
+                        onclick="setInputMethod('text')"
+                    >
+                        📝 Type Prescription
+                    </button>
+                    <button 
+                        id="imageMethodBtn"
+                        class="px-6 py-3 rounded-lg font-medium bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        onclick="setInputMethod('image')"
+                    >
+                        📸 Upload Image
+                    </button>
+                </div>
+
+                <!-- Text Input Section -->
+                <div id="textInputSection">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Enter your prescription details:
+                        </label>
+                        <textarea
+                            id="prescriptionText"
+                            placeholder="Example: Iron 65mg once daily, Folic Acid 400mcg daily..."
+                            class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-none"
+                            rows="4"
+                        ></textarea>
+                    </div>
+                    
+                    <!-- Quick Examples -->
+                    <div class="mb-6">
+                        <p class="text-sm text-gray-600 mb-3">💡 Quick Examples (click to use):</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button class="example-btn p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" 
+                                    onclick="setExample('Iron 65mg once daily, Folic Acid 400mcg daily')">
+                                <span class="text-lg mr-2">⚔️</span>
+                                <span class="text-sm font-medium">Iron Deficiency</span>
+                            </button>
+                            <button class="example-btn p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                                    onclick="setExample('Insulin 10 units before meals, Metformin 500mg twice daily')">
+                                <span class="text-lg mr-2">🍯</span>
+                                <span class="text-sm font-medium">Gestational Diabetes</span>
+                            </button>
+                            <button class="example-btn p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                                    onclick="setExample('Methyldopa 250mg twice daily, Calcium 500mg with meals')">
+                                <span class="text-lg mr-2">🛡️</span>
+                                <span class="text-sm font-medium">High Blood Pressure</span>
+                            </button>
+                            <button class="example-btn p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                                    onclick="setExample('Prenatal vitamins daily, Vitamin D 1000IU, Calcium 500mg')">
+                                <span class="text-lg mr-2">🌟</span>
+                                <span class="text-sm font-medium">General Wellness</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button
+                        id="analyzeBtn"
+                        onclick="analyzePrescription()"
+                        class="w-full py-4 rounded-lg font-bold text-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105"
+                    >
+                        🚀 Analyze with AI
+                    </button>
+                </div>
+
+                <!-- Image Input Section -->
+                <div id="imageInputSection" style="display: none;">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                        <div class="text-4xl mb-4">📱</div>
+                        <p class="text-lg font-medium text-gray-700 mb-2">Upload Prescription Image</p>
+                        <p class="text-sm text-gray-500 mb-4">Click to select an image file</p>
+                        <button 
+                            onclick="simulateImageUpload()"
+                            class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                        >
+                            📸 Choose Image (Demo)
+                        </button>
+                    </div>
+                    <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <div class="flex items-center">
+                            <span class="text-blue-500 mr-2">ℹ️</span>
+                            <p class="text-sm text-blue-700">
+                                <strong>AI OCR:</strong> Our system will automatically extract text from your prescription image!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Animation -->
+                <div id="loadingSection" style="display: none;" class="mt-6 text-center">
+                    <div class="inline-flex items-center space-x-2">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                        <span class="text-blue-600 font-medium">🤖 AI Analyzing Prescription...</span>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-500">
+                        • Extracting medication information<br/>
+                        • Analyzing health patterns<br/>
+                        • Assigning personalized health persona<br/>
+                        • Generating recommendations
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" style="display: none;" class="bg-white rounded-lg shadow-lg p-6">
+                <!-- This will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Import our AI functions (simplified for demo)
+        const PREGNANCY_MEDICATIONS = {
+            iron: { keywords: ['iron', 'ferrous', 'fe'], persona: 'iron_warrior', severity: 'moderate', category: 'nutritional' },
+            folic: { keywords: ['folic', 'folate'], persona: 'wellness_champion', severity: 'preventive', category: 'vitamin' },
+            calcium: { keywords: ['calcium'], persona: 'wellness_champion', severity: 'preventive', category: 'mineral' },
+            bp: { keywords: ['methyldopa', 'labetalol', 'nifedipine'], persona: 'pressure_guardian', severity: 'high', category: 'cardiac' },
+            diabetes: { keywords: ['insulin', 'metformin'], persona: 'sweet_balance', severity: 'high', category: 'metabolic' },
+            thyroid: { keywords: ['levothyroxine', 'thyroid'], persona: 'hormone_harmony', severity: 'moderate', category: 'hormonal' },
+            nausea: { keywords: ['ondansetron', 'zofran'], persona: 'comfort_care', severity: 'moderate', category: 'symptom_relief' }
+        };
+
+        const HEALTH_PERSONAS = {
+            iron_warrior: { name: "Iron Warrior", emoji: "⚔️", theme: "#DC2626", greeting: "Stay strong, warrior!" },
+            sweet_balance: { name: "Sweet Balance", emoji: "🍯", theme: "#2563EB", greeting: "Balance is your superpower!" },
+            pressure_guardian: { name: "Pressure Guardian", emoji: "🛡️", theme: "#059669", greeting: "Your heart is protected!" },
+            wellness_champion: { name: "Wellness Champion", emoji: "🌟", theme: "#7C3AED", greeting: "You're glowing today!" },
+            hormone_harmony: { name: "Hormone Harmony", emoji: "🦋", theme: "#DB2777", greeting: "In perfect harmony!" },
+            comfort_care: { name: "Comfort Care", emoji: "🌸", theme: "#EA580C", greeting: "Gentle care for you!" }
+        };
+
+        let currentInputMethod = 'text';
+
+        function setInputMethod(method) {
+            currentInputMethod = method;
+            
+            if (method === 'text') {
+                document.getElementById('textInputSection').style.display = 'block';
+                document.getElementById('imageInputSection').style.display = 'none';
+                document.getElementById('textMethodBtn').className = 'px-6 py-3 rounded-lg font-medium bg-blue-500 text-white';
+                document.getElementById('imageMethodBtn').className = 'px-6 py-3 rounded-lg font-medium bg-gray-200 text-gray-700 hover:bg-gray-300';
+            } else {
+                document.getElementById('textInputSection').style.display = 'none';
+                document.getElementById('imageInputSection').style.display = 'block';
+                document.getElementById('textMethodBtn').className = 'px-6 py-3 rounded-lg font-medium bg-gray-200 text-gray-700 hover:bg-gray-300';
+                document.getElementById('imageMethodBtn').className = 'px-6 py-3 rounded-lg font-medium bg-green-500 text-white';
+            }
+        }
+
+        function setExample(text) {
+            document.getElementById('prescriptionText').value = text;
+        }
+
+        function parsePrescription(text) {
+            console.log('🤖 AI Processing prescription...');
+            const medications = [];
+            const lowerText = text.toLowerCase();
+            
+            Object.keys(PREGNANCY_MEDICATIONS).forEach(medType => {
+                const medData = PREGNANCY_MEDICATIONS[medType];
+                const foundKeyword = medData.keywords.find(keyword => lowerText.includes(keyword));
+                
+                if (foundKeyword) {
+                    const dosageMatch = text.match(/(\d+(?:\.\d+)?)\s*(mg|mcg|iu|units?)/gi);
+                    medications.push({
+                        type: medType,
+                        name: foundKeyword.toUpperCase(),
+                        persona: medData.persona,
+                        severity: medData.severity,
+                        category: medData.category,
+                        dosage: dosageMatch ? dosageMatch[0] : 'Standard dose',
+                        confidence: '95%'
+                    });
+                }
+            });
+            
+            console.log('✅ AI Analysis complete:', medications);
+            return medications;
+        }
+
+        function assignHealthPersona(medications) {
+            console.log('🎭 Assigning health persona...');
+            
+            // Simple scoring - highest severity medication wins
+            let topPersona = 'wellness_champion';
+            let highestScore = 0;
+            
+            medications.forEach(med => {
+                const score = med.severity === 'high' ? 50 : med.severity === 'moderate' ? 25 : 10;
+                if (score > highestScore) {
+                    highestScore = score;
+                    topPersona = med.persona;
+                }
+            });
+            
+            console.log('✅ Persona assigned:', topPersona);
+            return topPersona;
+        }
+
+        function analyzeHealthRisk(medications) {
+            let riskScore = 0;
+            medications.forEach(med => {
+                if (med.severity === 'high') riskScore += 30;
+                else if (med.severity === 'moderate') riskScore += 15;
+                else riskScore += 5;
+            });
+            
+            let riskLevel = 'Low';
+            if (riskScore > 40) riskLevel = 'High';
+            else if (riskScore > 20) riskLevel = 'Moderate';
+            
+            return { riskLevel, riskScore };
+        }
+
+        async function analyzePrescription() {
+            const prescriptionText = document.getElementById('prescriptionText').value.trim();
+            
+            if (!prescriptionText) {
+                alert('Please enter your prescription details first!');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            
+            // Simulate AI processing time
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            try {
+                // AI Analysis
+                const medications = parsePrescription(prescriptionText);
+                const riskAnalysis = analyzeHealthRisk(medications);
+                const persona = assignHealthPersona(medications);
+                const personaData = HEALTH_PERSONAS[persona];
+                
+                // Show results
+                showResults({
+                    originalText: prescriptionText,
+                    medications,
+                    riskAnalysis,
+                    persona,
+                    personaData
+                });
+                
+            } catch (error) {
+                console.error('Analysis error:', error);
+                alert('Analysis failed. Please try again!');
+            } finally {
+                document.getElementById('loadingSection').style.display = 'none';
+            }
+        }
+
+        async function simulateImageUpload() {
+            // Show loading
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            
+            // Simulate OCR processing
+            await new Promise(resolve => setTimeout(resolve, 4000));
+            
+            // Mock OCR results
+            const mockOCRResults = [
+                "Iron 65mg once daily with food, Folic Acid 400mcg daily",
+                "Methyldopa 250mg twice daily, Calcium 500mg with meals",
+                "Insulin 10 units before meals, Iron 325mg daily",
+                "Levothyroxine 50mcg daily on empty stomach, Vitamin D 1000IU"
+            ];
+            
+            const ocrText = mockOCRResults[Math.floor(Math.random() * mockOCRResults.length)];
+            document.getElementById('prescriptionText').value = ocrText;
+            
+            // Analyze the OCR result
+            const medications = parsePrescription(ocrText);
+            const riskAnalysis = analyzeHealthRisk(medications);
+            const persona = assignHealthPersona(medications);
+            const personaData = HEALTH_PERSONAS[persona];
+            
+            showResults({
+                originalText: ocrText,
+                medications,
+                riskAnalysis,
+                persona,
+                personaData,
+                source: 'image_upload'
+            });
+            
+            document.getElementById('loadingSection').style.display = 'none';
+        }
+
+        function showResults(result) {
+            const resultsHTML = `
+                <div class="analysis-result">
+                    <div class="flex items-center mb-6">
+                        <span class="text-4xl mr-4">${result.personaData.emoji}</span>
+                        <div>
+                            <h3 class="text-2xl font-bold text-green-800 mb-2">
+                                🎉 Analysis Complete!
+                            </h3>
+                            <p class="text-lg text-green-600">${result.personaData.emoji} ${result.personaData.greeting}</p>
+                            <p class="text-sm text-gray-500 mt-1">
+                                ${result.source === 'image_upload' ? '📸 Extracted from uploaded image' : '📝 Analyzed from text input'}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Analysis Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
+                            <div class="text-3xl mb-3">💊</div>
+                            <div class="text-sm text-blue-600 font-medium mb-1">Medications Detected</div>
+                            <div class="text-2xl font-bold text-blue-800">${result.medications.length}</div>
+                            <div class="text-xs text-blue-600 mt-1">with 95% confidence</div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-yellow-50 to-orange-100 p-6 rounded-lg border border-orange-200">
+                            <div class="text-3xl mb-3">⚠️</div>
+                            <div class="text-sm text-orange-600 font-medium mb-1">Risk Assessment</div>
+                            <div class="text-2xl font-bold text-orange-800">${result.riskAnalysis.riskLevel}</div>
+                            <div class="text-xs text-orange-600 mt-1">${result.riskAnalysis.riskScore}% score</div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-purple-50 to-pink-100 p-6 rounded-lg border border-purple-200">
+                            <div class="text-3xl mb-3">${result.personaData.emoji}</div>
+                            <div class="text-sm text-purple-600 font-medium mb-1">Health Persona</div>
+                            <div class="text-2xl font-bold text-purple-800">${result.personaData.name}</div>
+                            <div class="text-xs text-purple-600 mt-1">Personalized experience</div>
+                        </div>
+                    </div>
+
+                    <!-- Detected Medications -->
+                    <div class="mb-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-3">🔍 Detected Medications:</h4>
+                        <div class="space-y-2">
+                            ${result.medications.map(med => `
+                                <div class="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
+                                    <div>
+                                        <span class="font-medium">${med.name}</span>
+                                        <span class="text-gray-600 text-sm ml-2">(${med.dosage})</span>
+                                    </div>
+                                    <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">${med.confidence}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Persona Transformation Preview -->
+                    <div class="persona-preview p-6 rounded-lg persona-${result.persona.replace('_', '-')} text-white mb-6">
+                        <h4 class="text-xl font-bold mb-3">🎭 Your App Will Transform Into:</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm opacity-90 mb-1">🎨 Theme Color:</p>
+                                <p class="font-medium">${result.personaData.theme}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm opacity-90 mb-1">💬 Greeting Style:</p>
+                                <p class="font-medium">"${result.personaData.greeting}"</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-center space-x-4">
+                        <button 
+                            onclick="document.getElementById('resultsSection').style.display='none'; document.getElementById('prescriptionText').value=''"
+                            class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                        >
+                            🔄 Analyze Another
+                        </button>
+                        <button 
+                            onclick="alert('This would redirect to your personalized dashboard!')"
+                            class="px-8 py-3 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg font-bold hover:from-green-600 hover:to-blue-700 transition-all transform hover:scale-105"
+                        >
+                            🎯 View Personalized Dashboard
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('resultsSection').innerHTML = resultsHTML;
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

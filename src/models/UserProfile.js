@@ -37,6 +37,17 @@ const userProfileSchema = new mongoose.Schema(
       min: [30, 'Weight must be at least 30kg'],
       max: [200, 'Weight must be less than 200kg']
     },
+    weightHistory: [{
+      weight: {
+        type: Number,
+        required: true
+      },
+      date: {
+        type: Date,
+        default: Date.now
+      },
+      gestationalWeeks: Number
+    }],
     emergencyContact: {
       name: String,
       phone: String,

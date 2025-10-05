@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Hybrid Switching</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test { background: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 8px; }
+        .database { background: #e8f5e8; }
+        .ai { background: #e8f0ff; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .response { background: white; padding: 10px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <h1>🤖 MatriCare Hybrid System Test</h1>
+    
+    <div class="test database">
+        <h3>📚 Database Questions (Will show "From Our Curated Database")</h3>
+        <button onclick="testDatabase()">Test: "stomach feels tight"</button>
+        <div id="databaseResult"></div>
+    </div>
+    
+    <div class="test ai">
+        <h3>🤖 AI Questions (Will switch to Gemini automatically)</h3>
+        <button onclick="testAI()">Test: "hi"</button>
+        <button onclick="testGeneral()">Test: "how are you"</button>
+        <div id="aiResult"></div>
+    </div>
+    
+    <div class="test">
+        <h3>🧪 Your Own Test</h3>
+        <input type="text" id="customQuestion" placeholder="Ask anything..." style="width: 70%; padding: 8px;">
+        <button onclick="testCustom()">Test</button>
+        <div id="customResult"></div>
+    </div>
+
+    <script>
+        // Simulate the database matching
+        function simulateDatabaseMatch(question) {
+            const pregnancyTerms = ['stomach', 'tight', 'belly', 'pregnant', 'food', 'eat', 'exercise', 'back pain', 'leg cramps'];
+            const lowerQuestion = question.toLowerCase();
+            
+            for (let term of pregnancyTerms) {
+                if (lowerQuestion.includes(term)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Simulate the hybrid system
+        function simulateResponse(question) {
+            if (simulateDatabaseMatch(question)) {
+                return {
+                    type: 'database',
+                    response: `📚 **From Our Curated Database**
+
+🤰 **Tight Stomach Feeling During Pregnancy - Complete Guide:**
+
+🔍 **COMMON CAUSES BY TRIMESTER:**
+
+**First Trimester (1-12 weeks):**
+• **Gas and bloating** - progesterone slows digestion
+• **Uterine stretching** - organ growing from walnut to grapefruit size
+• **Constipation** - hormones slow bowel movements
+• **Early Braxton Hicks** - rare but possible
+
+**Second Trimester (13-27 weeks):**
+• **Round ligament pain** - ligaments stretching to support growing uterus
+• **Braxton Hicks contractions** - irregular "practice" contractions
+• **Baby movements** - can feel like tightening
+• **Growing uterus** - reaching up toward ribs
+
+**Third Trimester (28-40 weeks):**
+• **Frequent Braxton Hicks** - preparing for labor
+• **Baby's position** - head down can create pressure
+• **Uterine muscle fatigue** - carrying increasing weight
+• **Pre-labor contractions** - becoming more organized
+
+🆚 **BRAXTON HICKS vs REAL CONTRACTIONS:**
+
+**Braxton Hicks (False Labor):**
+• Irregular timing (every 30 mins to 2 hours)
+• Don't get stronger over time
+• Stop with position change or walking
+• Usually painless or mildly uncomfortable
+• Felt mainly in front of belly
+
+**Real Labor Contractions:**
+• Regular pattern (every 5-10 minutes, then closer)
+• Get progressively stronger and longer
+• Continue despite position changes
+• Increasingly painful
+• Pain wraps around back
+
+💡 **IMMEDIATE RELIEF TECHNIQUES:**
+
+**Position Changes:**
+• Lie on left side with pillow between knees
+• Sit and lean forward slightly
+• Get on hands and knees (cat position)
+• Walk slowly if contractions stop with movement
+• Empty bladder (full bladder can trigger tightening)
+
+**Comfort Measures:**
+• Warm (not hot) bath - 98-100°F max
+• Gentle belly massage in circular motions
+• Deep breathing exercises
+• Warm compress on lower back
+• Stay hydrated - dehydration can trigger Braxton Hicks
+
+🚨 **CALL DOCTOR IMMEDIATELY IF:**
+
+**Before 37 Weeks:**
+• Regular contractions every 10 minutes or less
+• 4 or more contractions in 1 hour
+• Contractions getting stronger and closer together
+• Lower back pain with contractions
+
+**After 37 Weeks:**
+• Regular contractions 5 minutes apart for 1 hour
+• Water breaks (with or without contractions)
+• Severe pain that takes your breath away
+• Can't walk or talk through contractions
+
+**Any Time:**
+• Vaginal bleeding with tightening
+• Severe constant abdominal pain
+• Fever with abdominal tightening
+• Sudden gush or steady leak of fluid
+• Decreased baby movement
+
+Source: Mayo Clinic, American College of Obstetricians`
+                };
+            } else {
+                return {
+                    type: 'ai',
+                    response: `Hello! 👋 I'm MatriCare AI, your pregnancy health assistant! How can I help you today? 
+
+I'm here to support you with pregnancy-related questions and provide helpful information. Feel free to ask me about:
+• Pregnancy symptoms
+• Nutrition during pregnancy  
+• Exercise and wellness
+• General pregnancy care
+
+What would you like to know about your pregnancy journey? 🤱💕`
+                };
+            }
+        }
+        
+        function testDatabase() {
+            const result = simulateResponse("stomach feels tight");
+            document.getElementById('databaseResult').innerHTML = 
+                `<div class="response"><strong>✅ SWITCHED TO DATABASE</strong><br>${result.response}</div>`;
+        }
+        
+        function testAI() {
+            const result = simulateResponse("hi");
+            document.getElementById('aiResult').innerHTML = 
+                `<div class="response"><strong>🤖 SWITCHED TO AI</strong><br>${result.response}</div>`;
+        }
+        
+        function testGeneral() {
+            const result = simulateResponse("how are you");
+            document.getElementById('aiResult').innerHTML = 
+                `<div class="response"><strong>🤖 SWITCHED TO AI</strong><br>${result.response}</div>`;
+        }
+        
+        function testCustom() {
+            const question = document.getElementById('customQuestion').value;
+            if (!question) return;
+            
+            const result = simulateResponse(question);
+            const switchedTo = result.type === 'database' ? '📚 SWITCHED TO DATABASE' : '🤖 SWITCHED TO AI';
+            
+            document.getElementById('customResult').innerHTML = 
+                `<div class="response"><strong>${switchedTo}</strong><br>${result.response}</div>`;
+        }
+    </script>
+</body>
+</html>

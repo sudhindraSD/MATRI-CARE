@@ -16,10 +16,10 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { path: '/dashboard', icon: Heart, label: 'Dashboard' },
-    { path: '/calendar', icon: Calendar, label: 'Calendar' },
-    { path: '/chatbot', icon: MessageCircle, label: 'AI Assistant' },
-    { path: '/profile', icon: User, label: 'Profile' },
+    { path: '/dashboard', icon: Heart, label: '🏠 Dashboard', emoji: '📊' },
+    { path: '/calendar', icon: Calendar, label: '📅 Calendar', emoji: '🗓️' },
+    { path: '/chatbot', icon: MessageCircle, label: '🤖 AI Assistant', emoji: '💬' },
+    { path: '/profile', icon: User, label: '👤 Profile', emoji: '📝' },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -36,7 +36,7 @@ const Navbar = () => {
             >
               <Heart className="w-6 h-6 text-white" />
             </motion.div>
-            <span className="text-2xl font-bold gradient-text">MATRI-CARE</span>
+            <span className="text-2xl font-bold gradient-text">🌸 MATRI-CARE</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -63,8 +63,8 @@ const Navbar = () => {
           {/* User Menu */}
           <div className="hidden md:flex items-center space-x-4">
             <div className="text-right">
-              <p className="text-sm font-semibold text-gray-800">{user?.name}</p>
-              <p className="text-xs text-gray-500">{user?.role?.replace('_', ' ')}</p>
+              <p className="text-sm font-semibold text-gray-800">👩‍⚕️ {user?.name}</p>
+              <p className="text-xs text-gray-500">🤰 {user?.role?.replace('_', ' ')}</p>
             </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -73,7 +73,7 @@ const Navbar = () => {
               className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              <span>Logout</span>
+              <span>🚪 Logout</span>
             </motion.button>
           </div>
 
@@ -117,7 +117,7 @@ const Navbar = () => {
               className="w-full flex items-center space-x-3 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
               <LogOut className="w-5 h-5" />
-              <span>Logout</span>
+              <span>🚪 Logout</span>
             </button>
           </motion.div>
         )}

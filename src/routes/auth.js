@@ -4,7 +4,8 @@ import {
   register,
   login,
   getMe,
-  logout
+  logout,
+  deleteAccount
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import { handleValidationErrors } from '../middleware/validation.js';
@@ -38,5 +39,6 @@ router.post('/login', validateLogin, handleValidationErrors, login);
 // Protected routes
 router.get('/me', protect, getMe);
 router.get('/logout', protect, logout);
+router.delete('/delete-account', protect, deleteAccount);
 
 export default router;

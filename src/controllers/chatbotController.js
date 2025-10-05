@@ -78,28 +78,42 @@ const generateResponse = async (message, userId) => {
       };
     }
     
-    // Create comprehensive prompt for AI
+    // Create comprehensive prompt for AI with formatting
     const prompt = `You are MATRI-CARE AI, a pregnancy health assistant. 
 
 ${userContext}
 
 User Question: "${message}"
 
-IMPORTANT: Give CLEAR, DIRECT, and FOCUSED answers. Don't overwhelm with too much information.
+FORMATTING REQUIREMENTS:
+1. Start with emoji + **bold heading**
+2. Use **bold** for key terms and sections
+3. Use bullet points with • for lists
+4. Structure with clear sections
+5. Add emojis for visual appeal
+6. Use line breaks between sections
 
-Guidelines:
-1. Start with a direct answer to the question
-2. Keep it simple and easy to understand
-3. Use the user's profile information when relevant
-4. Give 2-3 key practical points maximum
-5. Be warm but concise
-6. If serious, clearly state when to contact a doctor
-7. Maximum 150 words - be concise!
-8. Use simple language, avoid medical jargon
-9. Focus ONLY on what they asked about
-10. Don't add unnecessary background information
+CONTENT GUIDELINES:
+• Give direct, focused answers
+• Keep responses under 200 words
+• Use simple language
+• Include medical disclaimers when needed
+• Be warm and supportive
 
-Respond as MATRI-CARE AI:`;
+EXAMPLE FORMAT:
+🤰 **Main Topic**
+
+**Key Points:**
+• Important point 1
+• Important point 2
+
+**When to Call Doctor:**
+• Serious symptom 1
+• Serious symptom 2
+
+⚠️ **Note:** Consult your healthcare provider for personalized advice.
+
+Now respond following this format:`;
 
     console.log('🤖 Sending request to Gemini AI...');
     console.log('Prompt length:', prompt.length);
@@ -183,38 +197,57 @@ Respond as MATRI-CARE AI:`;
 };
 
 // @desc    Send message to chatbot
-// @route   POST /api/v1/chatbot/message
+// @route   POST /api/v1/chatbot/message  
 // @access  Private
 export const sendMessage = async (req, res, next) => {
   try {
-    const { message } = req.body;
+    const { message, response, intent, confidence, source, isUrgent, tags } = req.body;
 
     if (!message || message.trim() === '') {
       return next(new ErrorResponse('Please provide a message', 400));
     }
 
-    // Generate response
-    const {
-      response,
-      intent,
-      confidence,
-      sentiment,
-      tags,
-      isUrgent
-    } = await generateResponse(message, req.user.id);
+    let finalResponse, finalIntent, finalConfidence, finalSentiment, finalTags, finalIsUrgent;
 
-    // Save chat message
+    // 🎯 HYBRID MODE: If response is provided (from client-side chatbot), use it
+    if (response) {
+      console.log('💾 Saving hybrid client-side chatbot response to MongoDB');
+      finalResponse = response;
+      finalIntent = intent || 'general';
+      finalConfidence = confidence || 0.85;
+      finalSentiment = isUrgent ? 'urgent' : 'neutral';
+      finalTags = tags || [];
+      finalIsUrgent = isUrgent || false;
+    } else {
+      // 🤖 FALLBACK: Generate response using backend AI if no response provided
+      console.log('🤖 Generating backend AI response');
+      const aiResponse = await generateResponse(message, req.user.id);
+      finalResponse = aiResponse.response;
+      finalIntent = aiResponse.intent;
+      finalConfidence = aiResponse.confidence;
+      finalSentiment = aiResponse.sentiment;
+      finalTags = aiResponse.tags;
+      finalIsUrgent = aiResponse.isUrgent;
+    }
+
+    // Save chat message to MongoDB
     const chatMessage = await ChatMessage.create({
       user: req.user.id,
       message: message.trim(),
-      response,
-      intent,
-      confidence,
-      sentiment,
-      tags,
-      isUrgent,
-      flaggedForReview: isUrgent
+      response: finalResponse,
+      intent: finalIntent,
+      confidence: finalConfidence,
+      sentiment: finalSentiment,
+      tags: finalTags,
+      isUrgent: finalIsUrgent,
+      flaggedForReview: finalIsUrgent,
+      context: {
+        source: source || 'backend_ai',
+        hybrid: !!response // Track if this was from hybrid approach
+      }
     });
+
+    console.log('✅ Chat message saved to MongoDB:', chatMessage._id);
 
     res.status(200).json({
       success: true,
@@ -224,11 +257,14 @@ export const sendMessage = async (req, res, next) => {
         response: chatMessage.response,
         sender: 'bot',
         intent: chatMessage.intent,
+        confidence: chatMessage.confidence,
+        source: source || 'backend_ai',
         isUrgent: chatMessage.isUrgent,
         timestamp: chatMessage.createdAt
       }
     });
   } catch (err) {
+    console.error('❌ Error saving chat message:', err);
     next(err);
   }
 };
@@ -238,26 +274,55 @@ export const sendMessage = async (req, res, next) => {
 // @access  Private
 export const getChatHistory = async (req, res, next) => {
   try {
-    const limit = parseInt(req.query.limit) || 50;
+    const limit = parseInt(req.query.limit) || 100;
     const page = parseInt(req.query.page) || 1;
     const skip = (page - 1) * limit;
 
-    const messages = await ChatMessage.find({ user: req.user.id })
+    const chatMessages = await ChatMessage.find({ user: req.user.id })
       .sort({ createdAt: 1 })
       .limit(limit)
       .skip(skip);
 
+    // 💬 FORMAT FOR FRONTEND: Convert to alternating user/bot message format
+    const formattedMessages = [];
+    chatMessages.forEach(msg => {
+      // Add user message
+      formattedMessages.push({
+        _id: msg._id + '_user',
+        message: msg.message,
+        sender: 'user',
+        timestamp: msg.createdAt
+      });
+      
+      // Add bot response
+      formattedMessages.push({
+        _id: msg._id,
+        message: msg.message,
+        response: msg.response,
+        sender: 'bot',
+        timestamp: msg.createdAt,
+        isUrgent: msg.isUrgent,
+        source: msg.context?.source || 'backend_ai',
+        confidence: msg.confidence,
+        category: msg.intent,
+        tier: msg.context?.source === 'gemini_ai' ? 2 : (msg.context?.hybrid ? 1 : 2)
+      });
+    });
+
     const total = await ChatMessage.countDocuments({ user: req.user.id });
+
+    console.log(`📋 Loaded ${formattedMessages.length} messages for user ${req.user.id}`);
 
     res.status(200).json({
       success: true,
-      count: messages.length,
-      total,
+      count: formattedMessages.length,
+      total: total * 2, // Each chat message creates 2 UI messages
       page,
       pages: Math.ceil(total / limit),
-      data: messages
+      data: formattedMessages
     });
   } catch (err) {
+    console.error('❌ Error fetching chat history:', err);
     next(err);
   }
 };

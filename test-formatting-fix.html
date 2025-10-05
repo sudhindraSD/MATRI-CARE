@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Markdown Formatting Fix</title>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .before {
+            background: #fef2f2;
+            border-left: 4px solid #dc2626;
+        }
+        .after {
+            background: #f0fdf4;
+            border-left: 4px solid #16a34a;
+        }
+        /* Same CSS as we added to index.css */
+        .markdown-content {
+            line-height: 1.6;
+        }
+        .markdown-content p {
+            margin-bottom: 0.75rem;
+        }
+        .markdown-content p:last-child {
+            margin-bottom: 0;
+        }
+        .markdown-content strong {
+            font-weight: 700;
+            color: #374151;
+        }
+        .markdown-content ul {
+            margin: 0.5rem 0;
+            padding-left: 0;
+            list-style: none;
+        }
+        .markdown-content li {
+            margin: 0.25rem 0;
+            padding-left: 1rem;
+            position: relative;
+        }
+        .markdown-content li:before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #9333ea;
+            font-weight: bold;
+        }
+        .raw-text {
+            color: #666;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Markdown Formatting Fix Test</h1>
+    <p>Testing how the database response looks before and after the markdown fix.</p>
+    
+    <div class="test-container before">
+        <h3>❌ Before (Raw Text - Bad)</h3>
+        <div class="raw-text">📚 **From Our Medical Database** 🤰 **Tight Stomach Feeling During Pregnancy - Complete Guide:** 🔍 **COMMON CAUSES BY TRIMESTER:** **First Trimester (1-12 weeks):** • **Gas and bloating** - progesterone slows digestion • **Uterine stretching** - organ growing from walnut to grapefruit size</div>
+    </div>
+    
+    <div class="test-container after">
+        <h3>✅ After (Formatted - Good)</h3>
+        <div class="markdown-content" id="formatted-content"></div>
+    </div>
+    
+    <div class="test-container">
+        <h3>🔧 How the Fix Works</h3>
+        <ul>
+            <li><strong>**Bold text**</strong> → Converted to HTML <code>&lt;strong&gt;</code> tags</li>
+            <li><strong>• Bullet points</strong> → Converted to proper HTML lists</li>
+            <li><strong>Line breaks</strong> → Converted to <code>&lt;br&gt;</code> and <code>&lt;p&gt;</code> tags</li>
+            <li><strong>CSS styling</strong> → Added proper spacing and colors</li>
+        </ul>
+    </div>
+
+    <script>
+        // Simulate the markdown formatter function
+        function formatText(text) {
+            if (!text) return '';
+            
+            return text
+                // Convert **bold** to <strong>
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                // Convert bullet points • to proper list items
+                .replace(/^• (.+)$/gm, '<li>$1</li>')
+                // Convert multiple newlines to paragraph breaks
+                .replace(/\n\n+/g, '</p><p>')
+                // Convert single newlines to line breaks
+                .replace(/\n/g, '<br>')
+                // Wrap in paragraph tags
+                .replace(/^(.+)/, '<p>$1')
+                .replace(/(.+)$/, '$1</p>')
+                // Wrap list items in ul tags
+                .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+                // Clean up nested paragraphs in lists
+                .replace(/<p>(<ul>.*<\/ul>)<\/p>/s, '$1')
+                .replace(/<br>(<\/li>)/g, '$1');
+        }
+
+        // Sample database response text
+        const sampleText = `📚 **From Our Medical Database**
+
+🤰 **Tight Stomach Feeling During Pregnancy - Complete Guide:**
+
+🔍 **COMMON CAUSES BY TRIMESTER:**
+
+**First Trimester (1-12 weeks):**
+• **Gas and bloating** - progesterone slows digestion
+• **Uterine stretching** - organ growing from walnut to grapefruit size
+• **Constipation** - hormones slow bowel movements
+
+**Second Trimester (13-27 weeks):**
+• **Round ligament pain** - ligaments stretching to support growing uterus
+• **Braxton Hicks contractions** - irregular "practice" contractions
+• **Baby movements** - can feel like tightening`;
+
+        // Apply the formatting
+        document.getElementById('formatted-content').innerHTML = formatText(sampleText);
+        
+        console.log('📝 Original text:', sampleText);
+        console.log('✅ Formatted HTML:', formatText(sampleText));
+    </script>
+</body>
+</html>

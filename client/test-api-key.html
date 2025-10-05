@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Key</title>
+</head>
+<body>
+    <h1>Testing Your API Key</h1>
+    <button onclick="testKey()">Test API Key</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testKey() {
+            const API_KEY = 'AIzaSyB4hlnDPViOskpseVwHzi-JaO1UOFJqOWo';
+            document.getElementById('result').innerHTML = 'Testing...';
+            
+            try {
+                // Test 1: List available models
+                console.log('Testing list models...');
+                const listResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`);
+                const models = await listResponse.json();
+                console.log('Available models:', models);
+                
+                if (models.models) {
+                    const modelList = models.models.map(m => m.name).join('<br>');
+                    document.getElementById('result').innerHTML = `✅ API Key Works!<br><br>Available models:<br>${modelList}`;
+                } else {
+                    document.getElementById('result').innerHTML = `❌ API Key Issue: ${JSON.stringify(models)}`;
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

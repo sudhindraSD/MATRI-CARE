@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Keyword Matching Fix - MATRI-CARE</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c5aa0;
+        }
+        .test-case {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+        .question {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .database-result {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        .ai-result {
+            background: #cce7ff;
+            border-left: 4px solid #007bff;
+        }
+        .error-result {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Keyword Matching Fix Test</h1>
+            <p>Testing improved routing logic for weather queries</p>
+        </div>
+
+        <div id="test-cases">
+            <div class="test-case">
+                <div class="question">🌤️ Test 1: "What's the weather like today?"</div>
+                <button onclick="testQuestion('What\\'s the weather like today?', 'weather-test')">Test Weather Query</button>
+                <div id="weather-test" class="result" style="display: none;"></div>
+            </div>
+
+            <div class="test-case">
+                <div class="question">🤰 Test 2: "My stomach feels tight during pregnancy"</div>
+                <button onclick="testQuestion('My stomach feels tight during pregnancy', 'pregnancy-test')">Test Pregnancy Query</button>
+                <div id="pregnancy-test" class="result" style="display: none;"></div>
+            </div>
+
+            <div class="test-case">
+                <div class="question">💧 Test 3: "How much water should I drink?" (Generic)</div>
+                <button onclick="testQuestion('How much water should I drink?', 'water-generic')">Test Generic Water</button>
+                <div id="water-generic" class="result" style="display: none;"></div>
+            </div>
+
+            <div class="test-case">
+                <div class="question">🤱 Test 4: "How much water should I drink during pregnancy?" (With Context)</div>
+                <button onclick="testQuestion('How much water should I drink during pregnancy?', 'water-pregnancy')">Test Pregnancy Water</button>
+                <div id="water-pregnancy" class="result" style="display: none;"></div>
+            </div>
+
+            <div class="test-case">
+                <div class="question">⚽ Test 5: "Who won the football game yesterday?"</div>
+                <button onclick="testQuestion('Who won the football game yesterday?', 'sports-test')">Test Sports Query</button>
+                <div id="sports-test" class="result" style="display: none;"></div>
+            </div>
+
+            <div class="test-case">
+                <div class="question">👋 Test 6: "Hello, how are you?"</div>
+                <button onclick="testQuestion('Hello, how are you?', 'greeting-test')">Test Greeting</button>
+                <div id="greeting-test" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <button onclick="runAllTests()" style="background: #28a745; font-weight: bold;">🚀 Run All Tests</button>
+        </div>
+
+        <div id="summary" style="margin-top: 20px; text-align: center;"></div>
+    </div>
+
+    <script type="module">
+        import { getSmartResponse } from './client/src/utils/newSmartChatbot.js';
+
+        window.testQuestion = async function(question, resultId) {
+            const button = event.target;
+            const resultDiv = document.getElementById(resultId);
+            
+            button.classList.add('loading');
+            button.textContent = '⏳ Testing...';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '🔄 Processing...';
+
+            try {
+                console.log(`🧪 Testing: "${question}"`);
+                const response = await getSmartResponse(question);
+                
+                const isDatabase = response.tier === 1;
+                const isAI = response.tier === 2;
+                
+                let resultClass = isDatabase ? 'database-result' : (isAI ? 'ai-result' : 'error-result');
+                let sourceIcon = isDatabase ? '📚' : (isAI ? '🤖' : '❌');
+                
+                resultDiv.className = `result ${resultClass}`;
+                resultDiv.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 8px;">
+                        ${sourceIcon} ${isDatabase ? 'DATABASE' : (isAI ? 'GEMINI AI' : 'ERROR')} 
+                        (Tier ${response.tier} | Score: ${response.matchScore || 'N/A'})
+                    </div>
+                    <div style="margin-bottom: 8px; font-size: 14px;">
+                        <strong>Source:</strong> ${response.source} | 
+                        <strong>Confidence:</strong> ${(response.confidence * 100).toFixed(1)}%
+                    </div>
+                    <div style="max-height: 200px; overflow-y: auto; font-size: 14px;">
+                        ${response.response.substring(0, 300)}${response.response.length > 300 ? '...' : ''}
+                    </div>
+                `;
+                
+                console.log(`✅ Test Result for "${question}":`, {
+                    tier: response.tier,
+                    source: response.source,
+                    matchScore: response.matchScore,
+                    isDatabase: isDatabase,
+                    isAI: isAI
+                });
+                
+            } catch (error) {
+                console.error(`❌ Test failed for "${question}":`, error);
+                resultDiv.className = 'result error-result';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            }
+            
+            button.classList.remove('loading');
+            button.textContent = button.textContent.replace('⏳ Testing...', 'Test Again');
+        }
+
+        window.runAllTests = async function() {
+            const testCases = [
+                { question: "What's the weather like today?", id: 'weather-test' },
+                { question: "My stomach feels tight during pregnancy", id: 'pregnancy-test' },
+                { question: "How much water should I drink?", id: 'water-generic' },
+                { question: "How much water should I drink during pregnancy?", id: 'water-pregnancy' },
+                { question: "Who won the football game yesterday?", id: 'sports-test' },
+                { question: "Hello, how are you?", id: 'greeting-test' }
+            ];
+
+            const summaryDiv = document.getElementById('summary');
+            summaryDiv.innerHTML = '🔄 Running all tests...';
+
+            let results = [];
+            
+            for (let test of testCases) {
+                try {
+                    const response = await getSmartResponse(test.question);
+                    results.push({
+                        question: test.question,
+                        tier: response.tier,
+                        source: response.source,
+                        expected: getExpectedResult(test.question),
+                        actual: response.tier === 1 ? 'DATABASE' : (response.tier === 2 ? 'AI' : 'ERROR')
+                    });
+                    
+                    // Update the UI for each test
+                    const resultDiv = document.getElementById(test.id);
+                    resultDiv.style.display = 'block';
+                    const isDatabase = response.tier === 1;
+                    const isAI = response.tier === 2;
+                    let resultClass = isDatabase ? 'database-result' : (isAI ? 'ai-result' : 'error-result');
+                    let sourceIcon = isDatabase ? '📚' : (isAI ? '🤖' : '❌');
+                    
+                    resultDiv.className = `result ${resultClass}`;
+                    resultDiv.innerHTML = `
+                        <div style="font-weight: bold; margin-bottom: 8px;">
+                            ${sourceIcon} ${isDatabase ? 'DATABASE' : (isAI ? 'GEMINI AI' : 'ERROR')} 
+                            (Tier ${response.tier})
+                        </div>
+                        <div style="font-size: 14px;">
+                            <strong>Source:</strong> ${response.source} | 
+                            <strong>Confidence:</strong> ${(response.confidence * 100).toFixed(1)}%
+                        </div>
+                    `;
+                } catch (error) {
+                    results.push({
+                        question: test.question,
+                        error: error.message,
+                        expected: getExpectedResult(test.question),
+                        actual: 'ERROR'
+                    });
+                }
+            }
+
+            // Generate summary
+            const passed = results.filter(r => r.actual === r.expected).length;
+            const total = results.length;
+            
+            summaryDiv.innerHTML = `
+                <div style="padding: 20px; border: 2px solid ${passed === total ? '#28a745' : '#dc3545'}; border-radius: 8px; background: ${passed === total ? '#d4edda' : '#f8d7da'};">
+                    <h3>${passed === total ? '✅' : '⚠️'} Test Results: ${passed}/${total} Passed</h3>
+                    ${results.map(r => `
+                        <div style="margin: 5px 0; font-size: 14px;">
+                            <strong>"${r.question.substring(0, 40)}..."</strong> 
+                            Expected: ${r.expected}, Got: ${r.actual} 
+                            ${r.actual === r.expected ? '✅' : '❌'}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function getExpectedResult(question) {
+            const lowerQ = question.toLowerCase();
+            if (lowerQ.includes('weather') || lowerQ.includes('football') || lowerQ.includes('hello')) return 'AI';
+            if (lowerQ.includes('pregnancy') || lowerQ.includes('stomach feels tight')) return 'DATABASE';
+            if (lowerQ.includes('water') && !lowerQ.includes('pregnancy')) return 'AI';
+            if (lowerQ.includes('water') && lowerQ.includes('pregnancy')) return 'DATABASE';
+            return 'AI'; // Default expectation
+        }
+
+        // Auto-run tests on page load for quick verification
+        setTimeout(() => {
+            console.log('🚀 Auto-running keyword matching tests...');
+            runAllTests();
+        }, 1000);
+    </script>
+</body>
+</html>

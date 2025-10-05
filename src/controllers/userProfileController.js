@@ -116,8 +116,13 @@ export const getUserProfile = async (req, res, next) => {
 // @access  Private
 export const updateUserProfile = async (req, res, next) => {
   try {
+    console.log('🔄 Profile Update Request:');
+    console.log('User ID:', req.user.id);
+    console.log('Request Body:', JSON.stringify(req.body, null, 2));
+    
     // Users can always update their own profile
     let profile = await UserProfile.findOne({ user: req.user.id });
+    console.log('📋 Existing Profile Found:', !!profile);
 
     if (!profile) {
       // Create new profile if it doesn't exist
@@ -158,11 +163,13 @@ export const updateUserProfile = async (req, res, next) => {
       { new: true, runValidators: true }
     );
 
+    console.log('✅ Profile Updated Successfully');
     res.status(200).json({
       success: true,
       data: profile
     });
   } catch (err) {
+    console.error('❌ Profile Update Error:', err);
     next(err);
   }
 };

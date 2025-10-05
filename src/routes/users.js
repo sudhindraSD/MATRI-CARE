@@ -61,7 +61,7 @@ const validatePregnancySpecifics = [
   body('vaginalDischarge.hasOdor').optional().isBoolean(),
   body('hasBleeding').optional().isBoolean(),
   body('swelling').optional().isArray(),
-  body('swowing.*.location').optional().trim(),
+  body('swelling.*.location').optional().trim(),
   body('swelling.*.severity').optional().isIn(['mild', 'moderate', 'severe']),
   body('hasHeadache').optional().isBoolean(),
   body('hasVisionDisturbance').optional().isBoolean(),
